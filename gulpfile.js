@@ -1,6 +1,5 @@
 var gulp = require('gulp');
 var gutil = require("gulp-util");
-var bower = require('gulp-bower');
 var uglify = require('gulp-uglify');
 var minifyCSS = require('gulp-minify-css');
 var concat = require('gulp-concat');
@@ -42,7 +41,9 @@ gulp.task("webpack-dev-server", function(callback) {
         resolve: {
           extensions: ['','.js']
         },
-        hot: true,
+        plugins: [
+          new webpack.HotModuleReplacementPlugin()
+        ],
         historyApiFallback: true
     });
 
