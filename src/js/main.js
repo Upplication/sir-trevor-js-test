@@ -1,6 +1,7 @@
 require("./slidesshare");
 require("./image-extended");
 require("./button");
+require("./widget");
 
 jQuery(function(){
   var sirtrevor = new SirTrevor.Editor({ el: jQuery('.js-st-instance') });

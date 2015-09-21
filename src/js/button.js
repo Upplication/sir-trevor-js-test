@@ -1,3 +1,5 @@
+"use strict";
+
 SirTrevor.Blocks.Button = SirTrevor.Block.extend({
     type: 'button',
     title: 'Button',
