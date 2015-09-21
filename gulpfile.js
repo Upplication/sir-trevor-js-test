@@ -12,12 +12,15 @@ var vendorPaths = [
         'bower_components/sir-trevor-js/sir-trevor.min.js',
         'bower_components/bootstrap/dist/js/bootstrap.min.js',
         'bower_components/spectrum/spectrum.js',
+        'bower_components/highlightjs/highlight.pack.js',
     ];
 
 var vendorCSSPaths = [
         'bower_components/bootstrap/dist/css/bootstrap.min.css',
         'bower_components/sir-trevor-js/sir-trevor.css',
-        'bower_components/spectrum/spectrum.css'
+        'bower_components/spectrum/spectrum.css',
+        'bower_components/spectrum/spectrum.css',
+        'bower_components/highlightjs/styles/github.css',
     ];
 
 gulp.task('vendor', function () {

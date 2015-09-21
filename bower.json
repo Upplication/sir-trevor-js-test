@@ -21,6 +21,7 @@
   ],
   "dependencies": {
     "bootstrap": "3.3.*",
+    "highlightjs": "~8.8.0",
     "jquery": "1.*",
     "sir-trevor-js": "0.5.*",
     "spectrum": "~1.7.1"
