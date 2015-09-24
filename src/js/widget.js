@@ -4,7 +4,7 @@ SirTrevor.Blocks.Widget = SirTrevor.Block.extend({
 
   type: "widget",
   title: "Widget",
-  icon_name: "image",
+  icon_name: "code",
 
   pastable: true,
 
@@ -19,12 +19,13 @@ SirTrevor.Blocks.Widget = SirTrevor.Block.extend({
 
   _serializeData: function() {
     return {
-        code: this.$el.find('textarea').val()
+        format: 'html',
+        text: this.$el.find('textarea').val()
     }
   },
 
   loadData: function(data) {
-    this.loadPastedContent(data.code);
+    this.loadPastedContent(data.text);
   },
 
   onContentPasted: function(ev) {
@@ -32,6 +33,9 @@ SirTrevor.Blocks.Widget = SirTrevor.Block.extend({
   },
 
   loadPastedContent: function(code) {
+    // First load the code into the text area
+    this.$el.find('textarea').val(code);
+
     // Replace < / > for its html chars
     code = code.replace(/</g, '&lt;');
     code = code.replace(/>/g, '&gt;');
