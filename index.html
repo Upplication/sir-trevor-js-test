@@ -8,11 +8,49 @@
     <script type="text/javascript">document.write("<base href=\"" + document.location + "\" />")</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link id="vendor-css" rel="stylesheet" type="text/css" href="dist/vendor.min.css">
+    <style>
+        section > h2 {
+            background-color: #00CA6B;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+            color: #FFFFFF;
+        }
+
+        pre, h3 {
+          width: 80%;
+          margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
-  <form url="url-to-save" id="ey">
-    <textarea name="data" class="js-st-instance"></textarea>
-  </form>
+  <section>
+    <h2>Editor</h2>
+    <form id="st-form">
+      <textarea name="data" class="js-st-instance"></textarea>
+    </form>
+  </section>
+  <section>
+    <h2>Preview</h2>
+    <div style="background-color: #00CA6B; color: #FFFFFF; padding: 20px">
+      <div style="width: 60%; margin: 0 auto;">
+          El HTML de la sección inferior es el resultado de:
+          <ul>
+              <li>Obtener el objeto JSON asociado a la instancia actual de <i>SirTrevor</i> <samp>SirTrevor.getInstance().store.retrieve().data</samp></li>
+              <li>Generar el HTML asociado a dicho objeto JSON usando <i>SirTrevorAdapter</i> <samp>SirTrevorHTMLAdapter.toHTML</samp> o <samp>SirTrevorHTMLAdapter.fromJSON</samp></li>
+              <li>Generar el HTML asociado a dicho objeto JSON usando <i>SirTrevorAdapter</i> <samp>SirTrevorHTMLAdapter.toHTML</samp> o <samp>SirTrevorHTMLAdapter.fromJSON</samp></li>
+
+          </ul>
+      </div>
+    </div>
+    <h3>Raw JSON from SirTrevor</h3>
+    <code><pre id="st-json-raw"></pre></code>
+    <h3>Generated HTML for the previous SirTrevor JSON <i>(its meant to be sent to the server and directly rendered)</i></h3>
+    <code><pre id="st-html"></pre></code>
+    <h3>Parsed JSON from the previous HTML</h3>
+    <code><pre id="st-json-parsed"></pre></code>
+    <div id="app-html"></div>
+  </section>
 </body>
 <script type="text/javascript" src="dist/vendor.min.js"></script>
 <script type="text/javascript" src="main.min.js"></script>
