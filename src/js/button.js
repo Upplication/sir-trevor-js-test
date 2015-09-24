@@ -166,8 +166,11 @@ SirTrevor.Blocks.Button = SirTrevor.Block.extend({
 
     loadData: function(data) {
         var self = this;
-        console.log("Button loadData triggered!");
-        console.log(data);
+
+        // Ignore these fields on the rebuild
+        delete data.text;
+        delete data.format;
+
         Object.keys(data).forEach(function (key) {
             var value = data[key];
 
@@ -243,13 +246,15 @@ SirTrevor.Blocks.Button = SirTrevor.Block.extend({
             }
         })
 
+        result.text = self.toHTML(result);
+        result.format = 'html';
+
         return result;
     },
 
-    toHTML: function() {
+    toHTML: function(data) {
         var self = this;
-        var data = self.getBlockData();
-        console.log(data);
+        data = data || self.getBlockData();
         var preview = $('<a>');
 
         preview.attr('onclick', data.onclick);
