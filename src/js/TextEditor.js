@@ -1,51 +1,4 @@
 
-var scribePluginToolbar = require("../../bower_components/scribe-plugin-toolbar/scribe-plugin-toolbar");
-
-var ScribeHeaderPlugin = function(block) {
-    return function (scribe) {
-        var tag = '<h2>';
-        var nodeName = 'H2';
-        var commandName = 'h2';
-
-        /**
-         * Chrome: the `heading` command doesn't work. Supported by Firefox only.
-         */
-
-        var headingCommand = new scribe.api.Command('formatBlock');
-
-        headingCommand.execute = function () {
-            if (this.queryState()) {
-                scribe.api.Command.prototype.execute.call(this, '<p>');
-            } else {
-                scribe.api.Command.prototype.execute.call(this, tag);
-            }
-        };
-
-        headingCommand.queryState = function () {
-            var selection = new scribe.api.Selection();
-            return !! selection.getContaining(function (node) {
-                return node.nodeName === nodeName;
-            });
-        };
-
-        /**
-         * All: Executing a heading command inside a list element corrupts the markup.
-         * Disabling for now.
-         */
-        headingCommand.queryEnabled = function () {
-            var selection = new scribe.api.Selection();
-            var listNode = selection.getContaining(function (node) {
-                return node.nodeName === 'OL' || node.nodeName === 'UL';
-            });
-
-            return scribe.api.Command.prototype.queryEnabled.apply(this, arguments)
-                && scribe.allowsBlockElements() && ! listNode;
-        };
-
-        scribe.commands[commandName] = headingCommand;
-    };
-};
-
 /**
  * FIXME: not works
  * @param block
@@ -61,58 +14,70 @@ var ScribeRemoveSirTrevorBarPlugin =  function (block) {
 };
 
 
-var ScribeFontColorPlugin =  function () {
+var ScribeFontTypePlugin = function() {
     return function (scribe) {
-        var codeCommand = new scribe.api.SimpleCommand('fontColor', '');
+        var commandName = 'fontType';
+
+        var fontTypeCommand = new scribe.api.Command('formatBlock');
+
+        fontTypeCommand.execute = function (value) {
+            if (this.queryState(value)) {
+                scribe.api.Command.prototype.execute.call(this, '<p>');
+            } else {
+                scribe.api.Command.prototype.execute.call(this, value);
+            }
+        };
+
+        fontTypeCommand.queryState = function (value) {
+            var selection = new scribe.api.Selection();
+            return !! selection.getContaining(function (node) {
+                return node.nodeName === value.toUpperCase();
+            });
+        };
+
+        /**
+         * All: Executing a heading command inside a list element corrupts the markup.
+         * Disabling for now.
+         */
+        fontTypeCommand.queryEnabled = function () {
+            var selection = new scribe.api.Selection();
+            var listNode = selection.getContaining(function (node) {
+                return node.nodeName === 'OL' || node.nodeName === 'UL';
+            });
+
+            return scribe.allowsBlockElements() && ! listNode;
+        };
+
+        scribe.commands[commandName] = fontTypeCommand;
+    };
+};
+
+var ScribeFontFamilyPlugin = function() {
+    return function (scribe) {
+        var command = new scribe.api.SimpleCommand('fontFamily', '');
         /**
          * Executed the command and set the style or remove if
          *
          * @param value
          */
-        codeCommand.execute = function (value) {
+        command.execute = function (value) {
             scribe.transactionManager.run(function () {
-                var selection = new scribe.api.Selection();
-
-                var parentNodeSelection = selection.selection.focusNode.parentNode,
-                    $parentNodeSelection = jQuery(parentNodeSelection),
-                    styleToApply = 'color:'+value+';',
-                    style = $parentNodeSelection.attr('style');
-
-                if (this.queryState(value)) {
-                    var index = style.indexOf(styleToApply);
-                    if (index != -1) {
-                        styleToApply = style.substring(0, index) + style.substring(index+styleToApply.length, style.length)
-                        $parentNodeSelection.attr('style', styleToApply);
-                    }
-
-                } else {
-                    if (style){
-                        style += styleToApply;
-                    } else {
-                        style = styleToApply;
-                    }
-                    $parentNodeSelection.attr('style', style);
-                }
+                var selection = new scribe.api.Selection(),
+                    $parentNodeSelection = jQuery(selection.selection.focusNode.parentNode);
+                $parentNodeSelection.css('font-family', value);
             }.bind(this));
         };
 
         /**
          * check the selection and return true if the command are already applied
          * or false if not.
-         * @param value optional
-         * @returns {boolean}
+         * @returns {boolean} true if the selection have a font-family style
          */
-        codeCommand.queryState = function (value) {
+        command.queryState = function () {
             var selection = new scribe.api.Selection();
-
-            var currentStyle = 'color:';
-            if (value) {
-                currentStyle += value + ";";
-            }
-
             return !! selection.getContaining(function (node) {
                 var style = jQuery(node).attr('style');
-                return style && style.indexOf(currentStyle) != -1;
+                return style && style.indexOf('font-family:') != -1;
             }.bind(this));
         };
 
@@ -120,50 +85,115 @@ var ScribeFontColorPlugin =  function () {
          * check if we can use the command in the current selection
          * @returns {boolean}
          */
-        codeCommand.queryEnabled = function () {
+        command.queryEnabled = function () {
             var selection = new scribe.api.Selection();
             var range = selection.range;
             // TODO: Support uncollapsed ranges
             return ! range.collapsed;
         };
 
-        scribe.commands.fontColor = codeCommand;
+        scribe.commands.fontFamily = command;
+    };
+};
+
+
+var ScribeFontColorPlugin =  function () {
+    return function (scribe) {
+        var command = new scribe.api.SimpleCommand('fontColor', '');
+        /**
+         * Executed the command and set the style or remove if
+         *
+         * @param value
+         */
+        command.execute = function (value) {
+            scribe.transactionManager.run(function () {
+                var selection = new scribe.api.Selection(),
+                    $parentNodeSelection = jQuery(selection.selection.focusNode.parentNode);
+                $parentNodeSelection.css('color', value);
+            }.bind(this));
+        };
+
+        /**
+         * check the selection and return true if the command are already applied
+         * or false if not.
+         * @returns {boolean} true of the selection have a color style
+         */
+        command.queryState = function () {
+            var selection = new scribe.api.Selection();
+            return !! selection.getContaining(function (node) {
+                var style = jQuery(node).attr('style');
+                return style && style.indexOf('color:') != -1;
+            }.bind(this));
+        };
+
+        /**
+         * check if we can use the command in the current selection
+         * @returns {boolean}
+         */
+        command.queryEnabled = function () {
+            var selection = new scribe.api.Selection();
+            var range = selection.range;
+            // TODO: Support uncollapsed ranges
+            return ! range.collapsed;
+        };
+
+        scribe.commands.fontColor = command;
+    };
+};
+
+var ScribeFontSizePlugin =  function () {
+    return function (scribe) {
+        var command = new scribe.api.SimpleCommand('fontSize', '');
+        /**
+         * Executed the command and set the style or remove
+         *
+         * @param value
+         */
+        command.execute = function (value) {
+            scribe.transactionManager.run(function () {
+                var selection = new scribe.api.Selection(),
+                    $parentNodeSelection = jQuery(selection.selection.focusNode.parentNode);
+                $parentNodeSelection.css('font-size', value);
+            }.bind(this));
+        };
+
+        /**
+         * check the selection and return true if the command are already applied
+         * or false if not.
+         * @returns {boolean} always true you can change font size of everyblock
+         */
+        command.queryState = function () {
+            return true;
+        };
+
+        /**
+         * check if we can use the command in the current selection
+         * @returns {boolean}
+         */
+        command.queryEnabled = function () {
+            var selection = new scribe.api.Selection();
+            var range = selection.range;
+            // TODO: Support uncollapsed ranges
+            return ! range.collapsed;
+        };
+
+        scribe.commands.fontSize = command;
     };
 };
 
 var ScribeBackgroundColorPlugin =  function () {
     return function (scribe) {
-        var codeCommand = new scribe.api.SimpleCommand('fontColor', '');
+        var command = new scribe.api.SimpleCommand('fontColor', '');
         /**
          * Executed the command and set the style or remove if
          *
          * @param value
          */
-        codeCommand.execute = function (value) {
+        command.execute = function (value) {
             scribe.transactionManager.run(function () {
-                var selection = new scribe.api.Selection();
-
-                var parentNodeSelection = selection.selection.focusNode.parentNode,
-                    $parentNodeSelection = jQuery(parentNodeSelection),
-                    styleToApply = 'background:'+value+';';
-
-                if (this.queryState(value)) {
-                    var style = $parentNodeSelection.attr('style'),
-                        index = style.indexOf(styleToApply);
-                    if (index != -1) {
-                        styleToApply = style.substring(0, index) + style.substring(index+styleToApply.length, style.length)
-                        $parentNodeSelection.attr('style', styleToApply);
-                    }
-
-                } else {
-                    var style = $parentNodeSelection.attr('style');
-                    if (style){
-                        style += styleToApply;
-                    } else {
-                        style = styleToApply;
-                    }
-                    $parentNodeSelection.attr('style', style);
-                }
+                var selection = new scribe.api.Selection(),
+                    $parentNodeSelection = jQuery(selection.selection.focusNode.parentNode);
+                $parentNodeSelection.css('background', value);
             }.bind(this));
         };
 
@@ -171,19 +201,13 @@ var ScribeBackgroundColorPlugin =  function () {
          * check the selection and return true if the command are already applied
          * or false if not.
          * @param value optional
-         * @returns {boolean}
+         * @returns {boolean} true of we have a background style
          */
-        codeCommand.queryState = function (value) {
+        command.queryState = function () {
             var selection = new scribe.api.Selection();
-
-            var currentStyle = 'background:';
-            if (value) {
-                currentStyle += value + ";";
-            }
-
             return !! selection.getContaining(function (node) {
                 var style = jQuery(node).attr('style');
-                return style && style.indexOf(currentStyle) != -1;
+                return style && style.indexOf('background:') != -1;
             }.bind(this));
         };
 
@@ -191,16 +215,198 @@ var ScribeBackgroundColorPlugin =  function () {
          * check if we can use the command in the current selection
          * @returns {boolean}
          */
-        codeCommand.queryEnabled = function () {
+        command.queryEnabled = function () {
             var selection = new scribe.api.Selection();
             var range = selection.range;
             // TODO: Support uncollapsed ranges
             return ! range.collapsed;
         };
 
-        scribe.commands.backgroundColor = codeCommand;
+        scribe.commands.backgroundColor = command;
     };
 };
+
+var ScribeAlignPlugin =  function () {
+    return function (scribe) {
+        var command = new scribe.api.SimpleCommand('textAlign', '');
+        /**
+         * Executed the command and set the style or remove if
+         *
+         * @param value
+         */
+        command.execute = function (value) {
+            scribe.transactionManager.run(function () {
+                var selection = new scribe.api.Selection(),
+                    $parentNodeSelection = jQuery(selection.selection.focusNode.parentNode);
+                $parentNodeSelection.css('text-align', value);
+            }.bind(this));
+        };
+
+        /**
+         * check the selection and return true if the command are already applied
+         * or false if not.
+         * @param value optional
+         * @returns {boolean} true of we have a text-align
+         */
+        command.queryState = function () {
+            var selection = new scribe.api.Selection();
+            return !! selection.getContaining(function (node) {
+                var style = jQuery(node).attr('style');
+                return style && style.indexOf('text-align:') != -1;
+            }.bind(this));
+        };
+
+        /**
+         * check if we can use the command in the current selection
+         * @returns {boolean} always true
+         */
+        command.queryEnabled = function () {
+            return true;
+        };
+
+        scribe.commands.textAlign = command;
+    };
+};
+
+var ScribeToolbarPlugin = {
+
+    getToolbarHtml: function() {
+        return "<div class=\"toolbar\">\n" +
+        "       <button data-command-name=\"bold\" disabled=\"disabled\">Bold</button>\n" +
+        "       <button data-command-name=\"italic\" class=\"\" disabled=\"disabled\">Italic</button>\n" +
+        "       <button data-command-name=\"underline\" disabled=\"disabled\">Underline</button>\n" +
+        "       <button data-command-name=\"strikeThrough\" class=\"\" disabled=\"disabled\">Strike Through</button>\n" +
+        "       <button data-command-name=\"removeFormat\" disabled=\"disabled\">Remove Formatting</button>\n" +
+        "       <button data-command-name=\"linkPrompt\" disabled=\"disabled\">Link</button>\n" +
+        "       <button data-command-name=\"unlink\" disabled=\"disabled\">Unlink</button>\n" +
+        "       <button data-command-name=\"insertOrderedList\" disabled=\"disabled\">Ordered List</button>\n" +
+        "       <button data-command-name=\"insertUnorderedList\" disabled=\"disabled\">Unordered List</button>\n" +
+        "       <button data-command-name=\"indent\" disabled=\"disabled\">Indent</button>" +
+        "       <button data-command-name=\"outdent\" disabled=\"disabled\">Outdent</button>" +
+        "       <button data-command-name=\"blockquote\" disabled=\"disabled\">Blockquote</button>" +
+        "       <button data-command-name=\"code\">Code</button>" +
+        "       <button data-command-name=\"textAlign\" disabled=\"disabled\" value=\"left\" >left</button>" +
+        "       <button data-command-name=\"textAlign\" disabled=\"disabled\" value=\"right\" >right</button>" +
+        "       <button data-command-name=\"textAlign\" disabled=\"disabled\" value=\"center\" >center</button>" +
+        "       <button data-command-name=\"textAlign\" disabled=\"disabled\" value=\"justify\" >justify</button>" +
+        "       <select data-command-name=\"fontFamily\">" +
+        "           <option value=\"'Times New Roman', Times, serif\" selected>Times New Roman</option>" +
+        "           <option value=\"Georgia, serif\">Georgia</option>" +
+        "           <option value=\"'Palatino Linotype', 'Book Antiqua', Palatino, serif\" >Palatino</option>" +
+        "           <option value=\"Arial, Helvetica, sans-serif\">Arial</option>" +
+        "           <option value=\"'Courier New', Courier, monospace\">Courier</option>" +
+        "       </select>" +
+        "       <select data-command-name=\"fontType\">" +
+        "           <option value=\"h1\">Header</option>" +
+        "           <option value=\"h2\">Header2</option>" +
+        "           <option value=\"h3\">Header3</option>" +
+        "           <option value=\"h4\">Header4</option>" +
+        "           <option value=\"p\" selected>Text</option>" +
+        "           <option value=\"small\">small</option>" +
+        "       </select>" +
+        "       <select data-command-name=\"fontSize\">" +
+        "           <option value=\"10px\">10</option>" +
+        "           <option value=\"12px\" selected>12</option>" +
+        "           <option value=\"14px\">14</option>" +
+        "           <option value=\"16px\">16</option>" +
+        "           <option value=\"18px\">18</option>" +
+        "           <option value=\"20px\">20</option>" +
+        "           <option value=\"22px\">22</option>" +
+        "           <option value=\"24px\">24</option>" +
+        "       </select>" +
+        "       <input class=\"st-value\" data-command-name=\"fontColor\" name=\"css-border-color\" type=\"color\" value=\"#4D4D4D\" >\n" +
+        "       <input class=\"st-value\" data-command-name=\"backgroundColor\" name=\"css-border-color\" type=\"color\" value=\"#4D4D4D\" >\n" +
+        "       <button data-command-name=\"undo\">Undo</button>\n" +
+        "       <button data-command-name=\"redo\" disabled=\"disabled\">Redo</button>\n" +
+        "       <button data-command-name=\"cleanup\">Clean</button>\n" +
+        "</div>";
+    },
+
+    build: function (toolbarNode) {
+        return function (scribe) {
+
+            var elems = toolbarNode.querySelectorAll('[data-command-name]');
+
+            Array.prototype.forEach.call(elems, function (elem) {
+                var $elem = jQuery(elem);
+                var callback = function(value) {
+                    // Look for a predefined command.
+                    var command = scribe.getCommand($elem.attr('data-command-name'));
+
+                    /**
+                     * Focus will have been taken away from the Scribe instance when
+                     * clicking on a button (Chrome will return the focus automatically
+                     * but only if the selection is not collapsed. As per: http://jsbin.com/tupaj/1/edit?html,js,output).
+                     * It is important that we focus the instance again before executing
+                     * the command, because it might rely on selection data.
+                     */
+                    scribe.el.focus();
+                    command.execute(value);
+                    /**
+                     * Chrome has a bit of magic to re-focus the `contenteditable` when a
+                     * command is executed.
+                     * As per: http://jsbin.com/papi/1/edit?html,js,output
+                     */
+                };
+
+                if ($elem.is('button')){
+                    $elem.on('mousedown', function () {
+                        callback($elem.val());
+                    });
+                } else {
+                    $elem.on('change', function () {
+                        callback($elem.val());
+                    });
+                }
+
+                // Keep the state of toolbar buttons in sync with the current selection.
+                // Unfortunately, there is no `selectionchange` event.
+                scribe.el.addEventListener('keyup', function() {
+                    updateUi($elem);
+                });
+                scribe.el.addEventListener('mouseup', function() {
+                    updateUi($elem);
+                });
+                scribe.el.addEventListener('focus', function() {
+                    updateUi($elem);
+                });
+                scribe.el.addEventListener('blur', function() {
+                    updateUi($elem);
+                });
+                // We also want to update the UI whenever the content changes. This
+                // could be when one of the toolbar buttons is actioned.
+                scribe.on('content-changed', function() {
+                    updateUi($elem);
+                });
+            });
+
+            function updateUi($elem) {
+                // Look for a predefined command.
+                var command = scribe.getCommand($elem.attr('data-command-name'));
+
+                var selection = new scribe.api.Selection();
+
+                // TODO: Do we need to check for the selection?
+                if (selection.range && command.queryState($elem.val())) {
+                    $elem.addClass('active');
+                } else {
+                    $elem.removeClass('active');
+                }
+
+                if (selection.range && command.queryEnabled()) {
+                    $elem.removeAttr('disabled');
+                } else {
+                    $elem.attr('disabled', 'disabled');
+                }
+
+                // TODO: set a val the $elem.css('???'); it is the computedStyle
+            }
+        };
+    }
+};
+
+
+
 
 
 /**
@@ -216,7 +422,11 @@ SirTrevor.Blocks.TextEditor = SirTrevor.Blocks.Text.extend({
     scribeOptions: {
         tags: {
             p: true,
+            h1: true,
             h2: true,
+            h3: true,
+            h4: true,
+            small: true,
             ul: true,
             ol: true,
             pepe: true,
@@ -236,37 +446,20 @@ SirTrevor.Blocks.TextEditor = SirTrevor.Blocks.Text.extend({
 
     editorHTML: "" +
         "<div>" +
-        "   <div class=\"toolbar\">\n" +
-        "       <button data-command-name=\"bold\" disabled=\"disabled\">Bold</button>\n" +
-        "       <button data-command-name=\"italic\" class=\"\" disabled=\"disabled\">Italic</button>\n" +
-        "       <button data-command-name=\"underline\" disabled=\"disabled\">Underline</button>\n" +
-        "       <button data-command-name=\"strikeThrough\" class=\"\" disabled=\"disabled\">Strike Through</button>\n" +
-        "       <button data-command-name=\"removeFormat\" disabled=\"disabled\">Remove Formatting</button>\n" +
-        "       <button data-command-name=\"linkPrompt\" disabled=\"disabled\">Link</button>\n" +
-        "       <button data-command-name=\"unlink\" disabled=\"disabled\">Unlink</button>\n" +
-        "       <button data-command-name=\"insertOrderedList\" disabled=\"disabled\">Ordered List</button>\n" +
-        "       <button data-command-name=\"insertUnorderedList\" disabled=\"disabled\">Unordered List</button>\n" +
-        "       <button data-command-name=\"indent\" disabled=\"disabled\">Indent</button>\n" +
-        "       <button data-command-name=\"outdent\" disabled=\"disabled\">Outdent</button>\n" +
-        "       <button data-command-name=\"blockquote\" disabled=\"disabled\">Blockquote</button>\n" +
-        "       <button data-command-name=\"code\">Code</button>\n" +
-        "       <button data-command-name=\"h2\" disabled=\"disabled\">H2</button>\n" +
-        "       <button data-command-name=\"fontColor\" data-command-value=\"green\" disabled=\"disabled\">Font color</button>\n" +
-        "       <button data-command-name=\"backgroundColor\" data-command-value=\"red\" disabled=\"disabled\">Background color</button>\n" +
-        "       <button data-command-name=\"undo\">Undo</button>\n" +
-        "       <button data-command-name=\"redo\" disabled=\"disabled\">Redo</button>\n" +
-        "       <button data-command-name=\"cleanup\">Clean</button>\n" +
-        "   </div>" +
+            ScribeToolbarPlugin.getToolbarHtml() +
         "   <div class=\"st-required st-text-block\" contenteditable=\"true\"></div>" +
         "</div>",
 
     configureScribe: function(scribe) {
-
-        scribe.use(new ScribeHeaderPlugin(this));
-        scribe.use(scribePluginToolbar(this.$editor.find('.toolbar')[0]));
+        var $toolbar = this.$editor.find('.toolbar');
+        scribe.use(new ScribeFontTypePlugin());
+        scribe.use(ScribeToolbarPlugin.build($toolbar[0]));
         scribe.use(new ScribeFontColorPlugin());
         scribe.use(new ScribeRemoveSirTrevorBarPlugin(this));
         scribe.use(new ScribeBackgroundColorPlugin(this));
+        scribe.use(new ScribeFontFamilyPlugin());
+        scribe.use(new ScribeFontSizePlugin());
+        scribe.use(new ScribeAlignPlugin());
     },
 
     clearInsertedStyles: function(e) {
@@ -280,7 +473,8 @@ SirTrevor.Blocks.TextEditor = SirTrevor.Blocks.Text.extend({
                 if (styles[i].indexOf("color:") != -1 ||
                     styles[i].indexOf("background:") != -1 ||
                     styles[i].indexOf("font-family:") != -1 ||
-                    styles[i].indexOf("font-size:") != -1) {
+                    styles[i].indexOf("font-size:") != -1 ||
+                    styles[i].indexOf("text-align:") != -1) {
                     stylesSanitize = stylesSanitize + styles[i] + ";";
                 }
             }
