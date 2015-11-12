@@ -9,10 +9,11 @@ var WebpackDevServer = require('webpack-dev-server');
 
 var vendorPaths = [
         'bower_components/jquery/jquery.min.js',
-        'bower_components/sir-trevor-js/sir-trevor.min.js',
+        'bower_components/sir-trevor-js/sir-trevor.js',
         'bower_components/bootstrap/dist/js/bootstrap.min.js',
         'bower_components/spectrum/spectrum.js',
         'bower_components/highlightjs/highlight.pack.js',
+        'bower_components/sir-trevor-adapter/sir-trevor-adapter.js'
     ];
 
 var vendorCSSPaths = [
@@ -20,13 +21,12 @@ var vendorCSSPaths = [
         'bower_components/sir-trevor-js/sir-trevor.css',
         'bower_components/spectrum/spectrum.css',
         'bower_components/spectrum/spectrum.css',
-        'bower_components/highlightjs/styles/github.css',
+        'bower_components/highlightjs/styles/github.css'
     ];
 
 gulp.task('vendor', function () {
     gulp.src(vendorPaths)
         .pipe(concat('vendor.min.js'))
-        .pipe(uglify())
         .pipe(gulp.dest("dist"));
 
       gulp.src(vendorCSSPaths)

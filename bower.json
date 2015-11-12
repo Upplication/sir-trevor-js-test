@@ -24,6 +24,8 @@
     "highlightjs": "~8.8.0",
     "jquery": "1.*",
     "sir-trevor-js": "0.5.*",
-    "spectrum": "~1.7.1"
+    "sir-trevor-adapter": "1.0.25",
+    "spectrum": "~1.7.1",
+    "scribe-plugin-toolbar": "0.2.1"
   }
 }

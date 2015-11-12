@@ -1,25 +1,25 @@
 // require("./slidesshare");
 // require("./image-extended");
-require("./st-adapter");
+//require("./st-adapter");
 require("./button");
+require("./TextEditor");
 require("./widget");
+//require("./raptor");
+var scribePluginToolbar = require("../../bower_components/scribe-plugin-toolbar/scribe-plugin-toolbar");
 
 jQuery(function(){
-  var sirtrevor = new SirTrevor.Editor({ el: jQuery('.js-st-instance') });
+  // see: options https://github.com/madebymany/sir-trevor-js/blob/master/src/config.js
+  var sirtrevor = new SirTrevor.Editor({ el: jQuery('.js-st-instance')});
 
-  SirTrevor.EventBus.on('block:create:new', function(){
-      console.log('EventBus On block:create:new');
-      console.log(arguments);
-      console.log(sirtrevor);
-      console.log($('form').serialize());
+    console.log(sirtrevor.formatBar);
+
+
+  SirTrevor.EventBus.on('block:create:new', function(e){
+      //e.;
+      //e.$el.trumbowyg();
   });
 
   $('form').submit(function(event){
-      // get the data!
-      console.log("$(form).submit()");
-      // console.log($('form').serialize());
-      // console.log(SirTrevor.getInstance().store.retrieve().data);
-      // console.log(JSON.stringify(SirTrevor.getInstance().store.retrieve().data));
       event.preventDefault();
   });
 });
@@ -27,9 +27,14 @@ jQuery(function(){
 window.mock = function() {
   // Proc the data save
   $('form#st-form').submit();
+  var adapter = new SirTrevorAdapter();
+
 
   var st = SirTrevor.getInstance();
-  var sta = new SirTrevorAdapter();
+
+  // force to update data
+  st.store.reset();
+  st.validateBlocks(false);
   var args = [];
 
   var clean = function(a) {
@@ -48,7 +53,8 @@ window.mock = function() {
   var generateHTML = function() {
     console.log('generateHTML');
     var data = args.pop();
-    var html = sta.toHTML(data)
+    var html = adapter.toHTML(data);
+    console.log(html);
     $('#st-html').html(clean(html));
     $('#app-html').html(html);
     args.push(html);
@@ -63,7 +69,7 @@ window.mock = function() {
   var getJSONfromHTML = function() {
     console.log('getJSONfromHTML');
     var html = args.pop();
-    var d1 = sta.fromHTML(html);
+    var d1 = adapter.toJSON(html);
     var d = JSON.stringify(d1, null, 2);
     d = clean(d);
     $('#st-json-parsed').html(d);
